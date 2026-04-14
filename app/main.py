@@ -19,9 +19,9 @@ app = FastAPI(
 
 @app.post("/messages", response_model=MessageResponse)
 async def messages(request: MessageRequest) -> MessageResponse:
-    logger.info("Requisição recebida: message='%s'", request.message[:50])
+    logger.info("Requisição recebida: message='%s' session_id='%s'", request.message[:50], request.session_id)
     try:
-        result = orchestrate(request.message)
+        result = orchestrate(request.message, session_id=request.session_id)
         return MessageResponse(
             answer=result["answer"],
             sources=[Source(section=s["section"]) for s in result["sources"]],

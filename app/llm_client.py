@@ -1,7 +1,8 @@
-from urllib import response
-
 import httpx
+import logging
 from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = """Você é um assistente técnico que responde perguntas com base exclusivamente no contexto fornecido.
 
@@ -14,9 +15,9 @@ Regras:
 """
 
 
-def call_llm(message: str, context: str) -> str:
+def call_llm(message: str, context: str, history: list[dict] | None = None) -> str:
     """
-    Chama o LLM com a pergunta e o contexto recuperado da KB.
+    Chama o LLM com a pergunta, contexto e histórico opcional da sessão.
     Retorna o texto da resposta.
     """
     user_prompt = f"""Contexto da base de conhecimento:
@@ -25,6 +26,15 @@ def call_llm(message: str, context: str) -> str:
 Pergunta: {message}
 """
 
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+
+    # Adiciona histórico da sessão antes da pergunta atual
+    if history:
+        messages.extend(history)
+        logger.debug("Histórico de sessão incluído: %d mensagens", len(history))
+
+    messages.append({"role": "user", "content": user_prompt})
+
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {settings.llm_api_key}",
@@ -32,13 +42,12 @@ Pergunta: {message}
 
     payload = {
         "model": settings.llm_model,
-        "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": user_prompt},
-        ],
+        "messages": messages,
         "temperature": 0.2,
         "max_tokens": 512,
     }
+
+    logger.debug("Chamando LLM: provider=%s model=%s", settings.llm_provider, settings.llm_model)
 
     response = httpx.post(
         f"{settings.llm_base_url}/chat/completions",
@@ -47,10 +56,10 @@ Pergunta: {message}
         timeout=30,
     )
 
-    print(f"[DEBUG] LLM status: {response.status_code}")
-    print(f"[DEBUG] LLM response: {response.text}")
-
+    logger.debug("Resposta do LLM: status=%d", response.status_code)
     response.raise_for_status()
 
     data = response.json()
-    return data["choices"][0]["message"]["content"].strip()
+    answer = data["choices"][0]["message"]["content"].strip()
+    logger.debug("Resposta gerada com %d caracteres", len(answer))
+    return answer
