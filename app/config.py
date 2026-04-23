@@ -1,6 +1,6 @@
-from pydantic_settings import BaseSettings
-
-
+from pydantic_settings import BaseSettings, SettingsConfigDict
+ 
+ 
 class Settings(BaseSettings):
     kb_url: str
     llm_provider: str = "openai"
@@ -10,9 +10,8 @@ class Settings(BaseSettings):
     memory_store: str = ""
     host: str = "0.0.0.0"
     port: int = 8000
-
-    class Config:
-        env_file = ".env"
-
-
+ 
+    model_config = SettingsConfigDict()
+ 
+ 
 settings = Settings()

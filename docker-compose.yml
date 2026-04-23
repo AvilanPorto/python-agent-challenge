@@ -9,5 +9,9 @@ services:
       - KB_URL=${KB_URL}
       - LLM_PROVIDER=${LLM_PROVIDER}
       - LLM_MODEL=${LLM_MODEL}
+      - LLM_BASE_URL=${LLM_BASE_URL}
       - LLM_API_KEY=${LLM_API_KEY}
+      - MEMORY_STORE=${MEMORY_STORE}
+      - HOST=${HOST}
+      - PORT=${PORT}
     restart: unless-stopped

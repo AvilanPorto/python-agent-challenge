@@ -27,11 +27,10 @@ def test_history_limit():
 
 def test_ttl_expiration(monkeypatch):
     store = SessionStore()
-
     store.add_exchange("sess1", "oi", "olá")
 
-    monkeypatch.setattr(time, "time", lambda: time.time() + 999999)
+    future_time = time.time() + 999999  # ← captura ANTES do mock
+    monkeypatch.setattr(time, "time", lambda: future_time)  # ← retorna valor fixo
 
     history = store.get_history("sess1")
-
     assert history == []
